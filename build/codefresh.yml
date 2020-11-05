@@ -67,18 +67,18 @@ steps:
         commands:
           - '! rm ${{SEC_SCAN_REPORT_FILE}} 2>/dev/null'
           - |-
-          set -o pipefail
-          trivy \
-              --quiet \
-              codefresh/${{CF_REPO_NAME}}:${{CF_BRANCH_TAG_NORMALIZED_LOWER_CASE}} &> ${{SEC_SCAN_REPORT_FILE}}
-          trivy \
-              --quiet \
-              --skip-update \
-              --ignorefile /tmp/.trivy/trivyignore \
-              --ignore-unfixed \
-              --exit-code 1 \
-              --severity ${{SEC_SCAN_SEVERITY_THRESHOLD}} \
-              codefresh/${{CF_REPO_NAME}}:${{CF_BRANCH_TAG_NORMALIZED_LOWER_CASE}}
+            set -o pipefail
+            trivy \
+                --quiet \
+                codefresh/${{CF_REPO_NAME}}:${{CF_BRANCH_TAG_NORMALIZED_LOWER_CASE}} &> ${{SEC_SCAN_REPORT_FILE}}
+            trivy \
+                --quiet \
+                --skip-update \
+                --ignorefile /tmp/.trivy/trivyignore \
+                --ignore-unfixed \
+                --exit-code 1 \
+                --severity ${{SEC_SCAN_SEVERITY_THRESHOLD}} \
+                codefresh/${{CF_REPO_NAME}}:${{CF_BRANCH_TAG_NORMALIZED_LOWER_CASE}}
         on_success:
           metadata:
             set:
