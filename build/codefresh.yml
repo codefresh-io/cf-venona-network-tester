@@ -32,13 +32,13 @@ steps:
           cf_export PACKAGE_VERSION
           semver-cli greater $PACKAGE_VERSION $MAIN_PACKAGE_VERSION
     when:
-        steps:
+      steps:
         - name: main_clone
-            on:
-            - success
-        branch:
+          on:
+          - success
+      branch:
         ignore:
-            - master
+          - master
 
   build:
     title: "Building Docker image"
@@ -51,48 +51,48 @@ steps:
     stage: scan
     type: parallel
     when:
-        steps:
-        - name: build
-            on:
-            - success
+      steps:
+      - name: build
+        on:
+        - success
     success_criteria:
-        condition:
+      condition:
         any:
-            secScanStep: security_scan_1.result == 'success'
-            secScanFail: '"${{IGNORE_SEC_SCAN}}" == "true"'
+          secScanStep: security_scan_1.result == 'success'
+          secScanFail: '"${{IGNORE_SEC_SCAN}}" == "true"'
     steps:
-        security_scan_1:
+      security_scan_1:
         image: aquasec/trivy:latest
         title: "Scanning image for security vulnerablities"
         commands:
-            - '! rm ${{SEC_SCAN_REPORT_FILE}} 2>/dev/null'
-            - |-
-            set -o pipefail
-            trivy \
-                --quiet \
-                codefresh/${{CF_REPO_NAME}}:${{CF_BRANCH_TAG_NORMALIZED_LOWER_CASE}} &> ${{SEC_SCAN_REPORT_FILE}}
-            trivy \
-                --quiet \
-                --skip-update \
-                --ignorefile /tmp/.trivy/trivyignore \
-                --ignore-unfixed \
-                --exit-code 1 \
-                --severity ${{SEC_SCAN_SEVERITY_THRESHOLD}} \
-                codefresh/${{CF_REPO_NAME}}:${{CF_BRANCH_TAG_NORMALIZED_LOWER_CASE}}
+          - '! rm ${{SEC_SCAN_REPORT_FILE}} 2>/dev/null'
+          - |-
+          set -o pipefail
+          trivy \
+              --quiet \
+              codefresh/${{CF_REPO_NAME}}:${{CF_BRANCH_TAG_NORMALIZED_LOWER_CASE}} &> ${{SEC_SCAN_REPORT_FILE}}
+          trivy \
+              --quiet \
+              --skip-update \
+              --ignorefile /tmp/.trivy/trivyignore \
+              --ignore-unfixed \
+              --exit-code 1 \
+              --severity ${{SEC_SCAN_SEVERITY_THRESHOLD}} \
+              codefresh/${{CF_REPO_NAME}}:${{CF_BRANCH_TAG_NORMALIZED_LOWER_CASE}}
         on_success:
-            metadata:
+          metadata:
             set:
-                - '${{build.imageId}}':
-                    - SECURITY_CHECK_PASS: true
+            - '${{build.imageId}}':
+              - SECURITY_CHECK_PASS: true
 
   upload_sec_scan_report:
     stage: scan
     image: mesosphere/aws-cli
     fail_fast: false
     when:
-        branch:
+      branch:
         only: [ master ]
-        steps:
+      steps:
         - name: security_scan
             on:
             - finished
@@ -100,10 +100,10 @@ steps:
             on:
             - finished
     environment:
-        - AWS_ACCESS_KEY_ID=${{SEC_SCAN_AWS_KEY_ID}}
-        - AWS_SECRET_ACCESS_KEY=${{SEC_SCAN_AWS_SECRET_KEY}}
+      - AWS_ACCESS_KEY_ID=${{SEC_SCAN_AWS_KEY_ID}}
+      - AWS_SECRET_ACCESS_KEY=${{SEC_SCAN_AWS_SECRET_KEY}}
     commands:
-        - |-
+      - |-
         aws s3 cp \
         ${{SEC_SCAN_REPORT_FILE}} \
         s3://${{SEC_SCAN_S3_BUCKET}}/codefresh/${{CF_REPO_NAME}}/${{CF_REPO_NAME}}:${{PACKAGE_VERSION}}.txt
@@ -126,10 +126,10 @@ steps:
     stage: push
     image: codefresh/cli
     commands:
-    - 'export PACKAGE_VERSION=$(cat VERSION)'
-    - "echo Current version: $PACKAGE_VERSION"
-    - "cf_export PACKAGE_VERSION"
-    - "git tag $PACKAGE_VERSION"
+      - 'export PACKAGE_VERSION=$(cat VERSION)'
+      - "echo Current version: $PACKAGE_VERSION"
+      - "cf_export PACKAGE_VERSION"
+      - "git tag $PACKAGE_VERSION"
     when:
       branch:
         only: [ master ]
