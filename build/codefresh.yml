@@ -24,13 +24,13 @@ steps:
     image: codefresh/semver
     commands:
         - |
-        git show origin/main:VERSION > VERSION.main
-        export MAIN_PACKAGE_VERSION=$(cat VERSION.main)
-        echo $MAIN_PACKAGE_VERSION
-        export PACKAGE_VERSION=$(if [ -f VERSION ]; then cat VERSION; else jq -r ".version" package.json; fi;)
-        echo $PACKAGE_VERSION
-        cf_export PACKAGE_VERSION
-        semver-cli greater $PACKAGE_VERSION $MAIN_PACKAGE_VERSION
+          git show origin/main:VERSION > VERSION.main
+          export MAIN_PACKAGE_VERSION=$(cat VERSION.main)
+          echo $MAIN_PACKAGE_VERSION
+          export PACKAGE_VERSION=$(if [ -f VERSION ]; then cat VERSION; else jq -r ".version" package.json; fi;)
+          echo $PACKAGE_VERSION
+          cf_export PACKAGE_VERSION
+          semver-cli greater $PACKAGE_VERSION $MAIN_PACKAGE_VERSION
     when:
         steps:
         - name: main_clone
