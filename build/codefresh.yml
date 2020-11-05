@@ -20,7 +20,7 @@ steps:
 
   version_compare:
     title: 'Comparing versions'
-    stage: Prepare
+    stage: clone
     image: codefresh/semver
     commands:
         - |
@@ -94,10 +94,10 @@ steps:
         only: [ master ]
       steps:
         - name: security_scan
-            on:
+          on:
              - finished
         - name: version_compare
-            on:
+          on:
              - finished
     environment:
       - AWS_ACCESS_KEY_ID=${{SEC_SCAN_AWS_KEY_ID}}
@@ -151,7 +151,7 @@ steps:
         - name: add_git_tag
           on:
            - success
-           
+
   promote_dockerhub_image:
     title: 'Promoting dockerhub image'
     stage: push
