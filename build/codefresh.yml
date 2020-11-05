@@ -43,7 +43,7 @@ steps:
   build:
     title: "Building Docker image"
     type: "build"
-    image_name: "codefresh-io/cf-venona-network-tester"
+    image_name: "codefresh/cf-venona-network-tester"
     tag: "${{CF_BRANCH_TAG_NORMALIZED}}"
     stage: "build"
 
