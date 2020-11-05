@@ -1,0 +1,170 @@
+# More examples of Codefresh YAML can be found at
+# https://codefresh.io/docs/docs/yaml-examples/examples/
+
+version: "1.0"
+# Stages can help you organize your steps in stages
+stages:
+  - "clone"
+  - "build"
+  - "scan"
+  - "push"
+
+steps:
+  main_clone:
+    title: "Cloning repository"
+    type: "git-clone"
+    repo: "codefresh-io/cf-venona-network-tester"
+    revision: "${{CF_BRANCH}}"
+    git: "cf_github"
+    stage: "clone"
+
+  version_compare:
+    title: 'Comparing versions'
+    stage: Prepare
+    image: codefresh/semver
+    commands:
+        - |
+        git show origin/main:VERSION > VERSION.main
+        export MAIN_PACKAGE_VERSION=$(cat VERSION.main)
+        echo $MAIN_PACKAGE_VERSION
+        export PACKAGE_VERSION=$(if [ -f VERSION ]; then cat VERSION; else jq -r ".version" package.json; fi;)
+        echo $PACKAGE_VERSION
+        cf_export PACKAGE_VERSION
+        semver-cli greater $PACKAGE_VERSION $MAIN_PACKAGE_VERSION
+    when:
+        steps:
+        - name: main_clone
+            on:
+            - success
+        branch:
+        ignore:
+            - master
+
+  build:
+    title: "Building Docker image"
+    type: "build"
+    image_name: "codefresh-io/cf-venona-network-tester"
+    tag: "${{CF_BRANCH_TAG_NORMALIZED}}"
+    stage: "build"
+
+  security_scan:
+    stage: scan
+    type: parallel
+    when:
+        steps:
+        - name: build
+            on:
+            - success
+    success_criteria:
+        condition:
+        any:
+            secScanStep: security_scan_1.result == 'success'
+            secScanFail: '"${{IGNORE_SEC_SCAN}}" == "true"'
+    steps:
+        security_scan_1:
+        image: aquasec/trivy:latest
+        title: "Scanning image for security vulnerablities"
+        commands:
+            - '! rm ${{SEC_SCAN_REPORT_FILE}} 2>/dev/null'
+            - |-
+            set -o pipefail
+            trivy \
+                --quiet \
+                codefresh/${{CF_REPO_NAME}}:${{CF_BRANCH_TAG_NORMALIZED_LOWER_CASE}} &> ${{SEC_SCAN_REPORT_FILE}}
+            trivy \
+                --quiet \
+                --skip-update \
+                --ignorefile /tmp/.trivy/trivyignore \
+                --ignore-unfixed \
+                --exit-code 1 \
+                --severity ${{SEC_SCAN_SEVERITY_THRESHOLD}} \
+                codefresh/${{CF_REPO_NAME}}:${{CF_BRANCH_TAG_NORMALIZED_LOWER_CASE}}
+        on_success:
+            metadata:
+            set:
+                - '${{build.imageId}}':
+                    - SECURITY_CHECK_PASS: true
+
+  upload_sec_scan_report:
+    stage: scan
+    image: mesosphere/aws-cli
+    fail_fast: false
+    when:
+        branch:
+        only: [ master ]
+        steps:
+        - name: security_scan
+            on:
+            - finished
+        - name: version_compare
+            on:
+            - finished
+    environment:
+        - AWS_ACCESS_KEY_ID=${{SEC_SCAN_AWS_KEY_ID}}
+        - AWS_SECRET_ACCESS_KEY=${{SEC_SCAN_AWS_SECRET_KEY}}
+    commands:
+        - |-
+        aws s3 cp \
+        ${{SEC_SCAN_REPORT_FILE}} \
+        s3://${{SEC_SCAN_S3_BUCKET}}/codefresh/${{CF_REPO_NAME}}/${{CF_REPO_NAME}}:${{PACKAGE_VERSION}}.txt
+
+  push_to_registry_branch:
+    title: "Pushing image to registry with branch name"
+    stage: push
+    type: push
+    candidate: ${{build}}
+    registry: "dockerhub"
+    tag: ${{CF_BRANCH_TAG_NORMALIZED}}
+    when:
+      steps:
+       - name: build
+         on:
+          - success
+
+  add_git_tag:
+    title: 'Add Git tag'
+    stage: push
+    image: codefresh/cli
+    commands:
+    - 'export PACKAGE_VERSION=$(cat VERSION)'
+    - "echo Current version: $PACKAGE_VERSION"
+    - "cf_export PACKAGE_VERSION"
+    - "git tag $PACKAGE_VERSION"
+    when:
+      branch:
+        only: [ master ]
+      steps:
+       - name: build
+         on:
+          - success
+
+  create_release:
+    stage: push
+    title: 'Create github release'
+    image: codefresh/cli-build
+    commands:
+     - 'curl --fail -X POST -d ''{"tag_name":"v${{PACKAGE_VERSION}}","target_commitish":"${{CF_REVISION}}","name":"Codefresh V${{PACKAGE_VERSION}}"}'' -H "Content-Type: application/json" -H "Authorization: token ${{GITHUB_TOKEN}}" https://api.github.com/repos/codefresh-io/${{CF_REPO_NAME}}/releases'
+    when:
+      branch:
+        only: [ master ]
+      steps:
+        - name: add_git_tag
+          on:
+           - success
+           
+  promote_dockerhub_image:
+    title: 'Promoting dockerhub image'
+    stage: push
+    type: push
+    registry: 'dockerhub'
+    candidate: ${{build}}
+    tags: 
+     - ${{PACKAGE_VERSION}}
+     - latest
+    when:
+      branch:
+        only: [ master ]
+      steps:
+       - name: add_git_tag
+         on:
+          - success
