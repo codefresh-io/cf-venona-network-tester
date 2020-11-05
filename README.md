@@ -4,7 +4,7 @@ Provides a simple way to test network connectivity issues to a set of provided U
 ## Example
 ### Usage with docker:
 `
-docker run --rm --env URLS=https://g.codefresh.io,https://github.com --env DEBUG=1 -it cf-venona-network-tester
+docker run --rm --env URLS=https://g.codefresh.io,https://github.com --env DEBUG=1 -it codefresh/cf-venona-network-tester
 `
 
 ### Environment Variables:
