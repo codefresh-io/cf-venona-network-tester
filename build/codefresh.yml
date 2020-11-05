@@ -95,10 +95,10 @@ steps:
       steps:
         - name: security_scan
             on:
-            - finished
+             - finished
         - name: version_compare
             on:
-            - finished
+             - finished
     environment:
       - AWS_ACCESS_KEY_ID=${{SEC_SCAN_AWS_KEY_ID}}
       - AWS_SECRET_ACCESS_KEY=${{SEC_SCAN_AWS_SECRET_KEY}}
