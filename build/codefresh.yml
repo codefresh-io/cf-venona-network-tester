@@ -38,7 +38,7 @@ steps:
           - success
       branch:
         ignore:
-          - master
+          - main
 
   build:
     title: "Building Docker image"
@@ -91,7 +91,7 @@ steps:
     fail_fast: false
     when:
       branch:
-        only: [ master ]
+        only: [ main ]
       steps:
         - name: security_scan
           on:
@@ -132,7 +132,7 @@ steps:
       - "git tag $PACKAGE_VERSION"
     when:
       branch:
-        only: [ master ]
+        only: [ main ]
       steps:
        - name: build
          on:
@@ -146,7 +146,7 @@ steps:
      - 'curl --fail -X POST -d ''{"tag_name":"v${{PACKAGE_VERSION}}","target_commitish":"${{CF_REVISION}}","name":"Codefresh V${{PACKAGE_VERSION}}"}'' -H "Content-Type: application/json" -H "Authorization: token ${{GITHUB_TOKEN}}" https://api.github.com/repos/codefresh-io/${{CF_REPO_NAME}}/releases'
     when:
       branch:
-        only: [ master ]
+        only: [ main ]
       steps:
         - name: add_git_tag
           on:
@@ -163,7 +163,7 @@ steps:
      - latest
     when:
       branch:
-        only: [ master ]
+        only: [ main ]
       steps:
        - name: add_git_tag
          on:
