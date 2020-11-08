@@ -10,7 +10,7 @@ function log() {
     echo $1
 }
 
-timeout=10 # spend no more than 10s per request
+timeout=60 # spend no more than 10s per request
 function testUrl() {
     if [[ "$INSECURE" -eq "1" ]]; then
         curl --max-time $timeout -ksSf $1 > /dev/null 2>err.log
