@@ -12,18 +12,10 @@ function log() {
 
 timeout=10 # spend no more than 10s per request
 function testUrl() {
-    if [[ "$DEBUG" -eq "1" ]]; then
-        if [[ "$INSECURE" -eq "1" ]]; then
-            curl --max-time $timeout -ksSf $1 > /dev/null
-        else
-            curl --max-time $timeout -sSf $1 > /dev/null
-        fi
+    if [[ "$INSECURE" -eq "1" ]]; then
+        curl --max-time $timeout -ksSf $1 > /dev/null 2>err.log
     else
-        if [[ "$INSECURE" -eq "1" ]]; then
-            curl --max-time $timeout -ksSf $1 > /dev/null 2>&1
-        else
-            curl --max-time $timeout -sSf $1 > /dev/null 2>&1
-        fi
+        curl --max-time $timeout -sSf $1 > /dev/null 2>err.log
     fi
 
     return $?
@@ -33,10 +25,16 @@ export IFS=","
 
 testResult=0
 for url in $URLS; do
-  logDebug "testing connection to: $url"
+  logDebug "testing: $url"
   testUrl $url
   testExitCode=$?
+  if [[ "$DEBUG" -eq "1" ]]; then
+    cat err.log # print error to logs
+  fi
   if [[ "$testExitCode" -ne "0" ]]; then
+    if [[ "$IN_CLUSTER" -eq "1" ]]; then
+        cat err.log >> /dev/termination-log # write termination message
+    fi
     log "can't reach: $url"
     testResult=1
   else
