@@ -63,6 +63,7 @@ function testKubernetes() {
         if [[ "$exitStatus" -eq "22" ]]; then
             # exit code 22 means we got 403 Forbidden response, which is good enough.
             logDebug "success: kubernetes apiserver"
+            return
         fi
         if [[ "$IN_CLUSTER" -eq "1" ]]; then
             cat err.log >> /dev/termination-log # write termination message
