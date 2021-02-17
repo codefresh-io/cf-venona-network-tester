@@ -3,7 +3,6 @@
 timeout=60 # spend no more than 10s per request
 testResult=0 # store final test result here
 export IFS=","
-
 set -o pipefail
 
 function logDebug() {
@@ -22,7 +21,6 @@ function testUrl() {
     else
         curl --max-time $timeout -sSf $1 > /dev/null 2>err.log
     fi
-
     return $?
 }
 
@@ -56,9 +54,7 @@ function testKubernetes() {
     fi
     logDebug "testing connectivity to kubernetes apiserver at: $hostAddr "
     curl -sfSk -H "Authorization: Bearer $token" $hostAddr --max-time $timeout > /dev/null 2>err.log
-
     exitStatus=$?
-
     if [[ "$DEBUG" -eq "1" ]]; then
         cat err.log # print error to logs
     fi
@@ -88,4 +84,3 @@ else
     log "network test finished successfully!"
     exit 0
 fi
-
