@@ -2,6 +2,8 @@
 
 timeout=60 # spend no more than 10s per request
 testResult=0 # store final test result here
+successMessage="network test finished successfully!"
+errorMessage="network test failed!"
 export IFS=","
 set -o pipefail
 
@@ -75,13 +77,28 @@ function testKubernetes() {
     fi
 }
 
-testUrls
-testKubernetes
+function testTCPConnection() {
+    nc -z $TUNNEL_REGISTER_HOST 80
+    if [[ $? -eq 0 ]]; then
+        testResult=1
+    else
+        testResult=0
+    fi
+}
+
+if [[ ! -z $TUNNEL_REGISTER_HOST ]]; then
+    successMessage="tcp test finished successfully!"
+    errorMessage="tcp test failed!"
+    testTCPConnection
+else
+    testUrls
+    testKubernetes
+fi
 
 if [[ $testResult -eq 1 ]]; then
-    log "network test failed!"
+    log $successMessage
     exit 1
 else
-    log "network test finished successfully!"
+    log $errorMessage
     exit 0
 fi
