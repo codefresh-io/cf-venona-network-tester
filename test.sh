@@ -78,12 +78,8 @@ function testKubernetes() {
 }
 
 function testTCPConnection() {
-    nc -z $TUNNEL_REGISTER_HOST 80
-    if [[ $? -eq 0 ]]; then
-        testResult=1
-    else
-        testResult=0
-    fi
+    nc -w $timeout -z $TUNNEL_REGISTER_HOST 80
+    testResult=$?
 }
 
 if [[ ! -z $TUNNEL_REGISTER_HOST ]]; then
@@ -96,9 +92,9 @@ else
 fi
 
 if [[ $testResult -eq 1 ]]; then
-    log $successMessage
+    log $errorMessag
     exit 1
 else
-    log $errorMessage
+    log $successMessage
     exit 0
 fi
