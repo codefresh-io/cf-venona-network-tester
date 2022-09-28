@@ -78,7 +78,7 @@ function testKubernetes() {
 }
 
 function testTCPConnection() {
-    nc -w $timeout -z $TUNNEL_REGISTER_HOST 80
+    nc -w $timeout -z $TUNNEL_REGISTER_HOST 443
     testResult=$?
 }
 
