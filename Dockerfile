@@ -1,9 +1,9 @@
-FROM curlimages/curl:7.85.0
+FROM bitnami/minideb:bullseye
 
 USER root
 
 # add bash
-RUN apk add --no-cache bash
+RUN apt-get update && apt-get install curl -y && rm -rf /var/lib/apt/lists/* 
 
 WORKDIR /test
 
