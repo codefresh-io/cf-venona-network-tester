@@ -3,7 +3,7 @@ FROM bitnami/minideb:bullseye
 USER root
 
 # add bash
-RUN apt-get update && apt-get install curl -y
+RUN apt-get update && apt-get install curl -y && rm -rf /var/lib/apt/lists/* 
 
 WORKDIR /test
 
