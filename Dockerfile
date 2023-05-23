@@ -1,4 +1,4 @@
-FROM bitnami/minideb:bullseye
+FROM ubuntu:23.10
 
 USER root
 
